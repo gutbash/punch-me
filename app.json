@@ -9,9 +9,13 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+        "supportsTablet": true,
+        "infoPlist": {
+          "NSCameraUsageDescription": "This app uses the camera to scan loyalty QR codes."
+        }
     },
     "android": {
+        "permissions": ["android.permission.CAMERA"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"

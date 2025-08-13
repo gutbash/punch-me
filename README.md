@@ -25,6 +25,12 @@ In the output, you'll find options to open the app in a
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
+## Loyalty flow
+
+- Scan an "add" QR (scheme: punchme://add?establishmentId=ID&name=Name&goal=10&reward=Free%20Item) to add a card.
+- Scan a "punch" QR (scheme: punchme://punch?establishmentId=ID) to increment punches.
+- When punches reach the goal, mark as redeemed to reset.
+
 ## Get a fresh project
 
 When you're ready, run:
