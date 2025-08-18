@@ -5,6 +5,8 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { getCards, saveCards } from '@/lib/storage';
 import { LoyaltyCard } from '@/lib/types';
+import { AddCard} from '@/components/AddCard';
+
 
 export default function CardScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -55,6 +57,7 @@ export default function CardScreen() {
           <Button title={Platform.OS === 'ios' ? 'Add to Apple Wallet' : 'Open Wallet Pass'} onPress={() => Linking.openURL(card.walletPassUrl!)} />
         </View>
       ) : null}
+      <AddCard/>
 
       <View style={{ height: 16 }} />
       {ready ? (

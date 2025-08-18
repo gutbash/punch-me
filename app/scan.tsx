@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View, ActivityIndicator, Button, Alert } from 'react-native';
-import { BarCodeScanner } from 'expo-barcode-scanner';
+import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
@@ -10,16 +10,9 @@ import { getCardByEstablishment, upsertCard, incrementPunch } from '@/lib/storag
 import { LoyaltyCard } from '@/lib/types';
 
 export default function ScanScreen() {
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    (async () => {
-      const { status } = await BarCodeScanner.requestPermissionsAsync();
-      setHasPermission(status === 'granted');
-    })();
-  }, []);
 
   const handleData = async (data: string) => {
     const parsed = parseScanData(data);
@@ -51,7 +44,7 @@ export default function ScanScreen() {
       await upsertCard(card);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert('Card added', `${card.name} card is now in your wallet.`);
-  router.push({ pathname: '/card/[id]', params: { id: card.id } });
+      router.push({ pathname: '/card/[id]', params: { id: card.id } });
       return;
     }
 
@@ -71,18 +64,20 @@ export default function ScanScreen() {
     }
   };
 
-  if (hasPermission === null) {
+  if (!permission) {
     return (
       <ThemedView style={styles.center}> 
         <ActivityIndicator />
-        <ThemedText>Requesting camera permission…</ThemedText>
+        <ThemedText>Loading camera permissions…</ThemedText>
       </ThemedView>
     );
   }
-  if (hasPermission === false) {
+
+  if (!permission.granted) {
     return (
       <ThemedView style={styles.center}>
-        <ThemedText>Camera permission not granted.</ThemedText>
+        <ThemedText>Camera permission is required to scan QR codes</ThemedText>
+        <Button title="Grant permission" onPress={requestPermission} />
       </ThemedView>
     );
   }
@@ -96,12 +91,18 @@ export default function ScanScreen() {
         </View>
       ) : null}
       <View style={styles.scannerWrap}>
-        <BarCodeScanner
-          onBarCodeScanned={scanned ? undefined : (e) => {
-            setScanned(true);
-            handleData(e.data).finally(() => setTimeout(() => setScanned(false), 1200));
-          }}
+        <CameraView
           style={StyleSheet.absoluteFillObject}
+          facing="back"
+          barcodeScannerSettings={{
+            barcodeTypes: ['qr'],
+          }}
+          onBarcodeScanned={scanned ? undefined : (result) => {
+            setScanned(true);
+            handleData(result.data).finally(() => 
+              setTimeout(() => setScanned(false), 1200)
+            );
+          }}
         />
       </View>
       <Button title="Reset scanner" onPress={() => setScanned(false)} />
