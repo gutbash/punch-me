@@ -1,6 +1,6 @@
-import { StyleSheet } from 'react-native';
-import { ThemedView } from '@/components/ThemedView';
 import AddCard from '@/components/AddCard';
+import { ThemedView } from '@/components/ThemedView';
+import { StyleSheet } from 'react-native';
 
 export default function TabTwoScreen() {
   return (

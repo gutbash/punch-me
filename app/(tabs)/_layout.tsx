@@ -10,6 +10,8 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+ 
+  // this is where each tab is being rendered.
 
   return (
     <Tabs
@@ -47,7 +49,7 @@ export default function TabLayout() {
         name="explore"
         options={{
           
-          title: 'Test',
+          title: 'Explore ',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
         }}
       />

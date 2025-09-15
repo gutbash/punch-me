@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
-import { Alert, Button, Linking, Platform, StyleSheet, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { getCards, saveCards } from '@/lib/storage';
 import { LoyaltyCard } from '@/lib/types';
-import { AddCard} from '@/components/AddCard';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Alert, Button, Linking, Platform, StyleSheet, View } from 'react-native';
+
 
 
 export default function CardScreen() {
@@ -57,7 +57,6 @@ export default function CardScreen() {
           <Button title={Platform.OS === 'ios' ? 'Add to Apple Wallet' : 'Open Wallet Pass'} onPress={() => Linking.openURL(card.walletPassUrl!)} />
         </View>
       ) : null}
-      <AddCard/>
 
       <View style={{ height: 16 }} />
       {ready ? (

@@ -1,20 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Modal,
-  StyleSheet,
-  Animated,
-  Dimensions,
-  Alert,
-  PanResponder,
-} from 'react-native';
-import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { getCards } from '@/lib/storage';
 import { LoyaltyCard } from '@/lib/types';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Animated,
+  Dimensions,
+  Modal,
+  PanResponder,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -166,14 +166,8 @@ const WalletCardComponent: React.FC<WalletCardProps> = ({
   // Generate a color based on card name for consistency
   const getCardColor = (name: string) => {
     const colors = [
-      '#3B82F6', // blue
-      '#EF4444', // red
-      '#10B981', // green
-      '#F59E0B', // amber
-      '#8B5CF6', // purple
-      '#F97316', // orange
-      '#06B6D4', // cyan
-      '#84CC16', // lime
+  
+      '#8B5CF6' // purple
     ];
     const hash = name.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
     return colors[hash % colors.length];
@@ -197,18 +191,18 @@ const WalletCardComponent: React.FC<WalletCardProps> = ({
       <TouchableOpacity
         style={[
           styles.card,
-          { backgroundColor: getCardColor(card.name) }
+          { backgroundColor: 'transparent', borderColor: getCardColor(card.name), borderWidth: 2 }
         ]}
         onPress={onPress}
         activeOpacity={0.8}
       >
         <View style={styles.cardHeader}>
           <View style={styles.cardIcon}>
-            <Text style={styles.cardIconText}>🏪</Text>
+            <Text style={[styles.cardIconText, { color: getCardColor(card.name) }]}>🏪</Text>
           </View>
           <View style={styles.cardInfo}>
-            <Text style={styles.cardName}>{card.name}</Text>
-            <Text style={styles.cardProgress}>
+            <Text style={[styles.cardName, { color: getCardColor(card.name) }]}>{card.name}</Text>
+            <Text style={[styles.cardProgress, { color: getCardColor(card.name) }]}>
               {card.punches}/{card.goal} punches
             </Text>
           </View>
@@ -223,7 +217,7 @@ const WalletCardComponent: React.FC<WalletCardProps> = ({
           <View 
             style={[
               styles.progressBar,
-              { width: `${Math.min(progress, 100)}%` }
+              { width: `${Math.min(progress, 100)}%`, backgroundColor: getCardColor(card.name) }
             ]} 
           />
         </View>
@@ -245,13 +239,11 @@ const ExpandedCardModal: React.FC<ExpandedCardModalProps> = ({
   onClose,
   onNavigateToCard,
 }) => {
-  const progress = (card.punches / card.goal) * 100;
-  const isComplete = card.punches >= card.goal;
 
   const getCardColor = (name: string) => {
     const colors = [
-      '#3B82F6', '#EF4444', '#10B981', '#F59E0B',
-      '#8B5CF6', '#F97316', '#06B6D4', '#84CC16',
+      '#3B82F6'
+
     ];
     const hash = name.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
     return colors[hash % colors.length];
@@ -273,50 +265,15 @@ const ExpandedCardModal: React.FC<ExpandedCardModalProps> = ({
 
         <View style={styles.modalContent}>
           <View style={styles.modalCardHeader}>
-            <View style={styles.modalCardIcon}>
-              <Text style={styles.modalCardIconText}>🏪</Text>
-            </View>
             <View>
               <Text style={styles.modalCardName}>{card.name}</Text>
-              <Text style={styles.modalCardSubtitle}>Loyalty Card</Text>
             </View>
           </View>
-
-          <View style={styles.progressSection}>
-            <View style={styles.progressHeader}>
-              <Text style={styles.progressLabel}>Progress</Text>
-              <Text style={styles.progressText}>
-                {card.punches}/{card.goal}
-              </Text>
-            </View>
-            <View style={styles.modalProgressBarContainer}>
-              <View 
-                style={[
-                  styles.modalProgressBar,
-                  { width: `${Math.min(progress, 100)}%` }
-                ]} 
-              />
-            </View>
-          </View>
-
-          {card.rewardDescription && (
-            <View style={styles.rewardSection}>
-              <Text style={styles.rewardTitle}>Reward</Text>
-              <Text style={styles.rewardDescription}>{card.rewardDescription}</Text>
-            </View>
-          )}
-
-          {isComplete && (
-            <View style={styles.completeBadge}>
-              <Text style={styles.completeEmoji}>🎉</Text>
-              <Text style={styles.completeTitle}>Ready to Redeem!</Text>
-              <Text style={styles.completeSubtitle}>
-                Show this card to claim your reward
-              </Text>
-            </View>
-          )}
-
-          <View style={styles.punchGrid}>
+          <ScrollView
+            style={styles.punchScroll}
+            contentContainerStyle={styles.punchGrid}
+            showsVerticalScrollIndicator={false}
+          >
             {Array.from({ length: card.goal }, (_, i) => (
               <View
                 key={i}
@@ -335,14 +292,7 @@ const ExpandedCardModal: React.FC<ExpandedCardModalProps> = ({
                 </Text>
               </View>
             ))}
-          </View>
-
-          <TouchableOpacity
-            style={styles.detailButton}
-            onPress={onNavigateToCard}
-          >
-            <Text style={styles.detailButtonText}>View Details</Text>
-          </TouchableOpacity>
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -521,6 +471,10 @@ const AddCard: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  title: {
+    fontSize: 20,
+    fontFamily: 'Dots',
+  },
   container: {
     flex: 1,
     padding: 16,
@@ -557,6 +511,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 20,
     fontWeight: 'bold',
+    fontFamily: 'Dots',
   },
   emptyState: {
     flex: 1,
@@ -586,6 +541,7 @@ const styles = StyleSheet.create({
   emptyAddButtonText: {
     color: 'white',
     fontWeight: '600',
+    fontFamily: 'Dots',
   },
   walletContainer: {
     flex: 1,
@@ -659,10 +615,12 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+    fontFamily: 'Dots',
   },
   cardProgress: {
     color: 'rgba(255, 255, 255, 0.8)',
     fontSize: 14,
+    fontFamily: 'Dots',
   },
   readyBadge: {
     backgroundColor: 'rgba(34, 197, 94, 0.3)',
@@ -674,6 +632,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 12,
     fontWeight: '600',
+    fontFamily: 'Dots',
   },
   progressBarContainer: {
     height: 8,
@@ -700,8 +659,8 @@ const styles = StyleSheet.create({
   },
   modalHeader: {
     alignItems: 'flex-end',
-    marginBottom: 20,
-    paddingTop: 20,
+    marginBottom: 8,
+    paddingTop: 8,
   },
   closeButton: {
     width: 32,
@@ -715,14 +674,23 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+    fontFamily: 'Dots',
   },
   modalContent: {
     flex: 1,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  punchScroll: {
+    alignSelf: 'stretch',
+    maxHeight: 480,
+    paddingHorizontal: 10,
+    marginTop: 0,
   },
   modalCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 8,
   },
   modalCardIcon: {
     width: 48,
@@ -740,10 +708,12 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 24,
     fontWeight: 'bold',
+    fontFamily: 'Dots',
   },
   modalCardSubtitle: {
     color: 'rgba(255, 255, 255, 0.8)',
     fontSize: 16,
+    fontFamily: 'Dots',
   },
   progressSection: {
     marginBottom: 24,
@@ -758,11 +728,13 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: '600',
+    fontFamily: 'Dots',
   },
   progressText: {
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+    fontFamily: 'Dots',
   },
   modalProgressBarContainer: {
     height: 12,
@@ -786,10 +758,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 8,
+    fontFamily: 'Dots',
   },
   rewardDescription: {
     color: 'rgba(255, 255, 255, 0.9)',
     fontSize: 14,
+    fontFamily: 'Dots',
   },
   completeBadge: {
     backgroundColor: 'rgba(34, 197, 94, 0.2)',
@@ -809,22 +783,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 4,
+    fontFamily: 'Dots',
   },
   completeSubtitle: {
     color: 'rgba(255, 255, 255, 0.8)',
     fontSize: 12,
     textAlign: 'center',
+    fontFamily: 'Dots',
   },
   punchGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 14,
+    marginBottom: 0,
   },
   punchCell: {
-    width: (screenWidth - 80) / 5 - 8,
+    // Large circular cells, two per row
+    width: (screenWidth - 40) / 2 - 50,
     aspectRatio: 1,
-    borderRadius: 8,
+    borderRadius: 9999,
     borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
@@ -839,6 +818,8 @@ const styles = StyleSheet.create({
   },
   punchCellText: {
     fontWeight: 'bold',
+    fontSize: 18,
+    fontFamily: 'Dots',
   },
   punchCellTextFilled: {
     color: '#374151',
@@ -856,6 +837,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+    fontFamily: 'Dots',
   },
 });
 
