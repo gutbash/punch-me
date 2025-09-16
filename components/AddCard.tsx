@@ -1,9 +1,11 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { getCards } from '@/lib/storage';
+import { getCards, upsertCard } from '@/lib/storage';
 import { LoyaltyCard } from '@/lib/types';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
+import { useThemeColor } from '@/hooks/useThemeColor';
+import { Colors } from '@/constants/Colors';
 import {
   Animated,
   Dimensions,
@@ -33,6 +35,8 @@ const WalletCardComponent: React.FC<WalletCardProps> = ({
   currentIndex,
   onPress 
 }) => {
+  // Use current theme background so content behind doesn't show through
+  const cardBackground = useThemeColor({}, 'background');
   const progress = (card.punches / card.goal) * 100;
   const isComplete = card.punches >= card.goal;
   
@@ -191,7 +195,7 @@ const WalletCardComponent: React.FC<WalletCardProps> = ({
       <TouchableOpacity
         style={[
           styles.card,
-          { backgroundColor: 'transparent', borderColor: getCardColor(card.name), borderWidth: 2 }
+          { backgroundColor: cardBackground, borderColor: getCardColor(card.name), borderWidth: 2 }
         ]}
         onPress={onPress}
         activeOpacity={0.8}
@@ -231,6 +235,7 @@ interface ExpandedCardModalProps {
   visible: boolean;
   onClose: () => void;
   onNavigateToCard: () => void;
+  onUpdatePunches: (newPunches: number) => void;
 }
 
 const ExpandedCardModal: React.FC<ExpandedCardModalProps> = ({
@@ -238,6 +243,7 @@ const ExpandedCardModal: React.FC<ExpandedCardModalProps> = ({
   visible,
   onClose,
   onNavigateToCard,
+  onUpdatePunches,
 }) => {
 
   const getCardColor = (name: string) => {
@@ -256,7 +262,7 @@ const ExpandedCardModal: React.FC<ExpandedCardModalProps> = ({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View style={[styles.modalContainer, { backgroundColor: getCardColor(card.name) }]}>
+      <View style={[styles.modalContainer, { backgroundColor: Colors.dark.background }]}>
         <View style={styles.modalHeader}>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeButtonText}>✕</Text>
@@ -275,12 +281,14 @@ const ExpandedCardModal: React.FC<ExpandedCardModalProps> = ({
             showsVerticalScrollIndicator={false}
           >
             {Array.from({ length: card.goal }, (_, i) => (
-              <View
+              <TouchableOpacity
                 key={i}
                 style={[
                   styles.punchCell,
                   i < card.punches ? styles.punchCellFilled : styles.punchCellEmpty
                 ]}
+                onPress={() => onUpdatePunches(Math.min(i + 1, card.goal))}
+                activeOpacity={0.8}
               >
                 <Text
                   style={[
@@ -290,7 +298,7 @@ const ExpandedCardModal: React.FC<ExpandedCardModalProps> = ({
                 >
                   {i < card.punches ? '✓' : i + 1}
                 </Text>
-              </View>
+              </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
@@ -380,6 +388,19 @@ const AddCard: React.FC = () => {
     }
   };
 
+  const handleUpdatePunches = async (newPunches: number) => {
+    if (!expandedCard) return;
+    const clamped = Math.max(0, Math.min(newPunches, expandedCard.goal));
+    const updated: LoyaltyCard = {
+      ...expandedCard,
+      punches: clamped,
+      updatedAt: new Date().toISOString(),
+    };
+    setExpandedCard(updated);
+    setCards(prev => prev.map(c => (c.id === updated.id ? updated : c)));
+    await upsertCard(updated);
+  };
+
   const stackHeight = cards.length > 0 ? 250 : 0;
 
   return (
@@ -464,6 +485,7 @@ const AddCard: React.FC = () => {
           visible={!!expandedCard}
           onClose={() => setExpandedCard(null)}
           onNavigateToCard={handleNavigateToCard}
+          onUpdatePunches={handleUpdatePunches}
         />
       )}
     </ThemedView>
@@ -671,7 +693,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   closeButtonText: {
-    color: 'white',
+    color: '#8B5CF6',
     fontSize: 18,
     fontWeight: 'bold',
     fontFamily: 'Dots',
@@ -705,13 +727,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   modalCardName: {
-    color: 'white',
+    color: '#8B5CF6',
     fontSize: 24,
     fontWeight: 'bold',
     fontFamily: 'Dots',
   },
   modalCardSubtitle: {
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: '#8B5CF6',
     fontSize: 16,
     fontFamily: 'Dots',
   },
@@ -725,13 +747,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   progressLabel: {
-    color: 'white',
+    color: '#8B5CF6',
     fontSize: 18,
     fontWeight: '600',
     fontFamily: 'Dots',
   },
   progressText: {
-    color: 'white',
+    color: '#8B5CF6',
     fontSize: 18,
     fontWeight: 'bold',
     fontFamily: 'Dots',
@@ -754,14 +776,14 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   rewardTitle: {
-    color: 'white',
+    color: '#8B5CF6',
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 8,
     fontFamily: 'Dots',
   },
   rewardDescription: {
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: '#8B5CF6',
     fontSize: 14,
     fontFamily: 'Dots',
   },
@@ -779,14 +801,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   completeTitle: {
-    color: 'white',
+    color: '#8B5CF6',
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 4,
     fontFamily: 'Dots',
   },
   completeSubtitle: {
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: '#8B5CF6',
     fontSize: 12,
     textAlign: 'center',
     fontFamily: 'Dots',
@@ -809,8 +831,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   punchCellFilled: {
-    backgroundColor: 'white',
-    borderColor: 'white',
+    backgroundColor: '#8B5CF6',
+    borderColor: '#8B5CF6',
   },
   punchCellEmpty: {
     backgroundColor: 'transparent',
@@ -822,7 +844,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Dots',
   },
   punchCellTextFilled: {
-    color: '#374151',
+    color: '#FFFFFF',
   },
   punchCellTextEmpty: {
     color: 'rgba(255, 255, 255, 0.5)',
